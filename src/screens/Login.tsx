@@ -5,7 +5,7 @@ import { Clock } from "../components/Logo";
 import { Button, ErrorNote, Field } from "../components/ui";
 import { api, native, server, session, type Me } from "../lib/api";
 
-export default function Login({ onDone }: { onDone: () => void }) {
+export default function Login({ onDone, onLocal }: { onDone: () => void; onLocal?: () => void }) {
   const [user, setUser] = useState("");
   const [pw, setPw] = useState("");
   const [show, setShow] = useState(false);
@@ -64,7 +64,8 @@ export default function Login({ onDone }: { onDone: () => void }) {
         <ErrorNote error={err} />
         <Button type="submit" disabled={busy} className="w-full !py-4 text-base">{busy ? "Signing in…" : "Sign in"}</Button>
       </form>
-      <p className="mt-auto pt-8 text-center text-xs text-ink-3">Students sign in with their SAP ID, teachers with their college email.</p>
+      <p className="mt-auto pt-8 text-center text-xs text-ink-3">Students sign in with their SAP ID, teachers with their college email.
+        {onLocal && <><br /><button type="button" onClick={onLocal} className="mt-2 font-semibold text-ink-2 underline">Use without signing in</button></>}</p>
     </div>
   );
 }

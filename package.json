@@ -1,7 +1,7 @@
 {
   "name": "raiden",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "RAIDEN — next class, any time. Student and faculty app for the CTTGS timetable.",
   "type": "module",
   "scripts": {

@@ -1,4 +1,5 @@
 import { Capacitor } from "@capacitor/core";
+import { localApi, mode } from "./local";
 
 /** where the CTTGS server is: saved on the sign-in screen. In the browser during development it is the same origin. */
 const K = { server: "raiden.server", token: "raiden.token", user: "raiden.user" };
@@ -19,6 +20,10 @@ export const session = {
 export class ApiError extends Error { constructor(msg: string, public status: number) { super(msg); } }
 
 export async function api<T = any>(path: string, opts: { method?: string; json?: unknown; auth?: boolean; form?: FormData } = {}): Promise<T> {
+  if (mode.get() === "local") {
+    if ((opts.method && opts.method !== "GET") || opts.json !== undefined || opts.form) throw new ApiError("This needs the CTTGS server (sign in on Me → Use a server).", 0);
+    try { return (await localApi(path)) as T; } catch (e: any) { throw new ApiError(e.message, e.status || 0); }
+  }
   const headers: Record<string, string> = {};
   const t = session.token();
   if (t && opts.auth !== false) headers.Authorization = `Bearer ${t}`;
@@ -48,6 +53,7 @@ export interface Me {
   username: string; role: Role; name: string; faculty_name?: string | null; division?: string | null; batch?: number | null;
   electives: string[]; must_change_password: boolean; published: boolean; run_id?: number; start_hour?: number; end_hour?: number;
   days?: string[]; published_at?: string | null; division_id?: string | null; division_name?: string | null;
+  local?: boolean; generated_at?: string;
 }
 export interface Item {
   key: string; date: string; course: string; type: "TH" | "LAB" | "TUT"; kind: "TH" | "LAB" | "TUT" | "EL"; kind_word: string;

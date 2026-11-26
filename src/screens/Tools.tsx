@@ -42,7 +42,7 @@ export default function Tools({ me }: { me: Me }) {
     { id: "rooms" as const, icon: <DoorOpen size={20} />, title: "Find a free room", text: "Any time this week, with seats and floor." },
     { id: "free" as const, icon: <CalendarClock size={20} />, title: "When is a class free?", text: "Plan an extra lecture without a clash." },
     { id: "request" as const, icon: <Send size={20} />, title: "Request a change", text: "Leave, move, swap or an extra class." },
-  ];
+  ].filter((t) => !me.local || t.id !== "request");
   return (
     <div className="space-y-5">
       <div><p className="label">For teachers</p><h1 className="display mt-1 text-[30px]">Tools<em>.</em></h1></div>
@@ -54,7 +54,7 @@ export default function Tools({ me }: { me: Me }) {
           </Card>
         ))}
       </div>
-      <section><h2 className="acc-title mb-3 text-[17px]">My requests</h2><Requests mine /></section>
+      {!me.local && <section><h2 className="acc-title mb-3 text-[17px]">My requests</h2><Requests mine /></section>}
       <Sheet open={open === "rooms"} onClose={() => setOpen("")} title="Free rooms"><RoomsTool me={me} /></Sheet>
       <Sheet open={open === "free"} onClose={() => setOpen("")} title="When is a class free?"><ClassFree me={me} /></Sheet>
       <Sheet open={open === "request"} onClose={() => setOpen("")} title="Request a change"><RequestForm me={me} done={() => setOpen("")} /></Sheet>

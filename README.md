@@ -23,7 +23,21 @@ git tag v1.0.0 && git push origin v1.0.0
 
 Install it on the phone (allow "install unknown apps" for the browser or Files app the first time).
 
-## Connect it to the timetable server
+## Two ways it gets the timetable
+**1. No server (default, free forever).** The timetable lives in this repo's `docs/` folder (GitHub Pages: Settings →
+Pages → main, /docs). The app downloads it from
+`https://manikyarathore.github.io/raiden/raiden.json` (GitHub Pages). Nothing to type: students pick their class,
+batch and electives once, teachers pick their name, the dean taps Dean. Works offline with the last copy.
+To update it, on the PC that runs CTTGS (after publishing, or after an extra class / cancellation / announcement):
+```bash
+python tools/export_raiden.py ~/raiden/docs --push
+```
+Another address: build with `VITE_DATA_URL=https://.../raiden.json`.
+
+**2. With a CTTGS server (admin and live features).** Me → *Sign in to a CTTGS server*: sign-in with SAP ID / email,
+the admin's extra class / cancel / room change from the phone, teachers' change requests, announcements.
+
+## Connect it to a timetable server (way 2)
 1. Run CTTGS **with login** so phones can reach it: `CTTGS.bat lan` (Windows) or `./CTTGS.sh lan` (Linux) on the
    college PC, or Docker / a hosted server. Publish a timetable there.
 2. On the phone, open Raiden → **Server** on the sign-in screen → enter the address, e.g. `http://192.168.1.20:8000`
@@ -36,9 +50,9 @@ Install it on the phone (allow "install unknown apps" for the browser or Files a
 | Role | Login | Password |
 |---|---|---|
 | Admin | `admin` | `admin` → you set a new one at the first sign-in |
-| Dean | `dean@nmims.edu` | `Raiden@Dean1` |
-| Teacher | `poulami.das@nmims.edu` | `Raiden@Teach1` |
-| Student | `70572300001` | `Raiden@Stud1` |
+| Dean | `dean@nmims.edu` | `dean123` |
+| Teacher | `poulami.das@nmims.edu` | `teacher123` |
+| Student | `70572300001` | `student123` |
 
 Real accounts: in CTTGS, **Users → Import for the RAIDEN app** with the Excel template (role, login, password, name,
 class, batch, electives, faculty_name).

@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Spinner } from "./components/ui";
 import { Clock } from "./components/Logo";
 import { native, session, type Me, type Role } from "./lib/api";
+import { mode, profile } from "./lib/local";
 import { useFeed, useMe, useSchedule } from "./lib/hooks";
 import { notifyNew, scheduleReminders } from "./lib/notify";
 import AdminHome from "./screens/AdminHome";
@@ -17,6 +18,7 @@ import Manage from "./screens/Manage";
 import MeScreen from "./screens/Me";
 import Tools from "./screens/Tools";
 import Updates from "./screens/Updates";
+import Setup from "./screens/Setup";
 import Week from "./screens/Week";
 
 type Tab = { id: string; label: string; icon: ReactNode; el: (me: Me, go: (t: string) => void) => ReactNode };
@@ -39,15 +41,19 @@ const TABS: Record<Role, Tab[]> = {
 };
 
 export default function App() {
-  const [authed, setAuthed] = useState(!!session.token());
+  const [m, setM] = useState(mode.get());
+  const [authed, setAuthed] = useState(m === "local" ? !!profile.get() : !!session.token());
   const qc = useQueryClient();
   useEffect(() => {
     const f = () => { setAuthed(false); qc.clear(); };
     window.addEventListener("raiden:logout", f);
     return () => window.removeEventListener("raiden:logout", f);
   }, [qc]);
-  if (!authed) return <Login onDone={() => setAuthed(true)} />;
-  return <Signed />;
+  const switchTo = (x: "local" | "server") => { mode.set(x); setM(x); qc.clear(); setAuthed(x === "local" ? !!profile.get() : !!session.token()); };
+  if (!authed) return m === "local"
+    ? <Setup onDone={() => { qc.clear(); setAuthed(true); }} onServer={() => switchTo("server")} />
+    : <Login onDone={() => setAuthed(true)} onLocal={() => switchTo("local")} />;
+  return <Signed key={m} />;
 }
 
 function Signed() {
@@ -74,7 +80,7 @@ function Signed() {
     return (
       <div className="grid h-full place-items-center p-8 text-center">
         <div><p className="display text-xl">Can't load your account</p><p className="mt-2 text-sm text-ink-2">{(me.error as Error)?.message}</p>
-          <button className="shine mt-5 px-5 py-3 font-semibold" onClick={() => { session.clear(); window.dispatchEvent(new Event("raiden:logout")); }}>Sign in again</button></div>
+          <button className="shine mt-5 px-5 py-3 font-semibold" onClick={() => { session.clear(); window.dispatchEvent(new Event("raiden:logout")); }}>{me.data?.local ? "Pick again" : "Sign in again"}</button></div>
       </div>
     );
   }

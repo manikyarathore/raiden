@@ -14,7 +14,7 @@ const changeIcon = (s?: string) => s === "cancelled" ? <XCircle size={17} /> : s
 const tone = (f: FeedItem) => f.type === "change" ? (f.status === "cancelled" ? "var(--bad)" : f.status === "extra" ? "var(--acc)" : "var(--warn)") : f.type === "announcement" ? "var(--lec)" : "var(--ink-2)";
 
 export default function Updates({ me }: { me: Me }) {
-  const staff = me.role === "admin" || me.role === "dean";
+  const staff = (me.role === "admin" || me.role === "dean") && !me.local;
   const [tab, setTab] = useState<"feed" | "requests">("feed");
   const [ann, setAnn] = useState(false);
   return (

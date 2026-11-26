@@ -3,6 +3,7 @@ import { AlertTriangle, CalendarX2, RefreshCw } from "lucide-react";
 import { DayList, NextCard } from "../components/Schedule";
 import { Empty, ErrorNote, Spinner } from "../components/ui";
 import type { Me } from "../lib/api";
+import { load } from "../lib/local";
 import { useFeed, useSchedule } from "../lib/hooks";
 import { fmtDay, today } from "../lib/time";
 
@@ -32,7 +33,7 @@ export default function Home({ me }: { me: Me }) {
           <h1 className="display mt-1 text-[28px] leading-tight">{greet(me)}<em>.</em></h1>
           <p className="mt-0.5 text-sm text-ink-2">{forFaculty ? me.faculty_name : [me.division_name || me.division, me.batch ? `Batch ${me.batch}` : ""].filter(Boolean).join(" · ")}</p>
         </div>
-        <button onClick={() => qc.invalidateQueries()} className="grid size-9 place-items-center rounded-full bg-sheet ring-1 ring-grid" aria-label="Refresh">
+        <button onClick={async () => { if (me.local) await load(true).catch(() => null); qc.invalidateQueries(); }} className="grid size-9 place-items-center rounded-full bg-sheet ring-1 ring-grid" aria-label="Refresh">
           <RefreshCw size={16} className={s.isFetching ? "animate-spin" : ""} /></button>
       </div>
       {!me.published ? <NotPublished /> : s.isLoading ? <Spinner label="Loading your day" /> : s.error ? <ErrorNote error={s.error} /> : s.data && (

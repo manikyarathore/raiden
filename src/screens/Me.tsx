@@ -1,11 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import clsx from "clsx";
-import { Bell, KeyRound, LogOut, Moon, Server } from "lucide-react";
+import { Bell, KeyRound, LogOut, Moon, RefreshCw, Server, UserRoundPen } from "lucide-react";
 import { useState } from "react";
 import { Clock } from "../components/Logo";
 import { Button, Card, ErrorNote, Field, Segmented, Select, Sheet } from "../components/ui";
 import { api, server, session, type Me } from "../lib/api";
 import { useOptions } from "../lib/hooks";
+import { load, mode as dataMode, profile } from "../lib/local";
 import { reminders } from "../lib/notify";
 import { theme, type Mode } from "../lib/theme";
 import { ChangePassword } from "./Login";
@@ -28,7 +29,7 @@ export default function MeScreen({ me }: { me: Me }) {
         <Clock size={110} className="absolute -right-6 -top-6 opacity-[.13]" bolt={false} />
         <div className="grid size-14 place-items-center rounded-full bg-ink text-[22px] font-semibold text-paper">{me.name.replace(/^(Dr|Prof|Mr|Ms|Mrs)\.?\s+/i, "").slice(0, 1)}</div>
         <h1 className="display mt-3 text-[26px] leading-tight">{me.name}</h1>
-        <p className="mono mt-1 text-[12px] text-ink-3">{me.username} · {ROLE[me.role]}</p>
+        <p className="mono mt-1 text-[12px] text-ink-3">{me.local ? ROLE[me.role] : `${me.username} · ${ROLE[me.role]}`}</p>
         {me.role === "student" && (
           <div className="mt-4 flex flex-wrap gap-2 text-[13px]">
             <span className="rounded-full bg-sheet px-3 py-1 ring-1 ring-grid">{me.division_name || me.division || "No class set"}</span>
@@ -53,12 +54,23 @@ export default function MeScreen({ me }: { me: Me }) {
         <div className="flex items-center gap-3"><Moon size={18} className="text-ink-2" /><b className="font-semibold">Look</b></div>
         <Segmented value={mode} onChange={(m) => { setMode(m); theme.set(m); }} options={[{ value: "system", label: "Auto" }, { value: "light", label: "Light" }, { value: "dark", label: "Dark" }]} />
       </Card>
+      {me.local ? (
+        <Card className="divide-y divide-grid !p-0">
+          <button onClick={async () => { await load(true).catch(() => null); qc.invalidateQueries(); }} className="flex w-full items-center gap-3 px-4 py-3.5 text-left">
+            <RefreshCw size={18} className="text-ink-2" /><span className="flex-1 font-semibold">Get the latest timetable</span>
+            <span className="mono text-[11px] text-ink-3">{me.generated_at ? new Date(me.generated_at).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}</span></button>
+          <button onClick={() => { profile.set(null); qc.clear(); window.dispatchEvent(new Event("raiden:logout")); }} className="flex w-full items-center gap-3 px-4 py-3.5 text-left"><UserRoundPen size={18} className="text-ink-2" /><span className="flex-1 font-semibold">Change who I am</span></button>
+          <button onClick={() => { dataMode.set("server"); location.reload(); }} className="flex w-full items-center gap-3 px-4 py-3.5 text-left"><Server size={18} className="text-ink-2" /><span className="flex-1 font-semibold">Sign in to a CTTGS server</span><span className="text-[12px] text-ink-3">admin · live</span></button>
+        </Card>
+      ) : (
       <Card className="divide-y divide-grid !p-0">
         <button onClick={() => setPw(true)} className="flex w-full items-center gap-3 px-4 py-3.5 text-left"><KeyRound size={18} className="text-ink-2" /><span className="flex-1 font-semibold">Change password</span></button>
         <div className="flex items-center gap-3 px-4 py-3.5"><Server size={18} className="text-ink-2" /><span className="flex-1 font-semibold">Server</span><span className="mono max-w-[55%] truncate text-[12px] text-ink-3">{server.get() || location.host}</span></div>
         <button onClick={out} className="flex w-full items-center gap-3 px-4 py-3.5 text-left text-bad"><LogOut size={18} /><span className="flex-1 font-semibold">Sign out</span></button>
+        <button onClick={() => { dataMode.set("local"); location.reload(); }} className="flex w-full items-center gap-3 px-4 py-3.5 text-left"><RefreshCw size={18} className="text-ink-2" /><span className="flex-1 font-semibold">Use without signing in</span></button>
       </Card>
-      <p className="label text-center">Raiden 1.0 · MPSTME</p>
+      )}
+      <p className="label text-center">Raiden 1.1 · MPSTME</p>
       <Sheet open={pw} onClose={() => setPw(false)} title="Change password"><ChangePassword me={me} onDone={() => setPw(false)} /></Sheet>
       <Sheet open={edit} onClose={() => setEdit(false)} title="Your class details"><EditStudent me={me} done={() => setEdit(false)} /></Sheet>
     </div>
@@ -73,7 +85,10 @@ function EditStudent({ me, done }: { me: Me; done: () => void }) {
   const [batch, setBatch] = useState(String(me.batch || ""));
   const [el, setEl] = useState<string[]>(me.electives);
   const m = useMutation({
-    mutationFn: () => api("/api/m/profile", { method: "PUT", json: { batch: batch ? Number(batch) : null, electives: el } }),
+    mutationFn: async () => {
+      if (me.local) { const p = profile.get(); if (p) profile.set({ ...p, batch: batch ? Number(batch) : null, electives: el }); return; }
+      return api("/api/m/profile", { method: "PUT", json: { batch: batch ? Number(batch) : null, electives: el } });
+    },
     onSuccess: () => { qc.invalidateQueries(); done(); },
   });
   return (
